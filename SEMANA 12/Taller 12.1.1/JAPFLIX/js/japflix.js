@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const url = 'https://japceibal.github.io/japflix_api/movies-data.json'; 
+    const btnBuscar = document.getElementById('btnBuscar');
+    const inputBuscar = document.getElementById('inputBuscar');
+    const lista = document.getElementById('lista');
 
+    // cargar las pelis desde el JSON y guardarlas en el localStorage
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -13,64 +17,60 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Películas guardadas en localStorage');
         })
         .catch(error => {
-            console.error('No se cargo correctamente el JSON', error);
+            console.error('No se cargó correctamente el JSON', error);
         });
-});
 
-document.addEventListener('DOMContentLoaded', function () {
-    const btnBuscar = document.getElementById('btnBuscar');
-    const inputBuscar = document.getElementById('inputBuscar');
-    const lista = document.getElementById('lista');
-
-    // Recuperar la lista de películas del localStorage
-    const peliculas = JSON.parse(localStorage.getItem('listaPeliculas')) || [];
-
-    // Función para filtrar y mostrar las películas
+    // filtrar y mostrar las peliculas 
     function buscarPeliculas() {
-        const termino = inputBuscar.value.trim().toLowerCase();
+        const termino = inputBuscar.value.trim().toLowerCase(); //trim es para ignorar los espacios en la busqueda
         lista.innerHTML = '';
 
         if (!termino) return;
 
-        // Filtrar las películas basándose en los campos relevantes (palabras completas)
-        const resultados = peliculas.filter(pelicula => 
+        // Recuperar las películas del localStorage
+        const peliculas = JSON.parse(localStorage.getItem('listaPeliculas')) || [];
+
+        // Filtrar title, genres, tagline, overview
+        const resultados = peliculas.filter(pelicula =>
             ['title', 'genres', 'tagline', 'overview']
-            .some(attr => coincidePalabraExacta(pelicula[attr], termino))
+            .some(attr => coincide(pelicula[attr], termino))
         );
 
-        // Mostrar los resultados
-        resultados.length ? resultados.forEach(pelicula => mostrarPelicula(pelicula)) :
-        mostrarMensaje('No se encontraron películas que coincidan con la búsqueda.');
+        //resultados
+        if (resultados.length) {
+            resultados.forEach(pelicula => mostrarPelicula(pelicula));
+        } else {
+            mostrarMensaje('No se encontraron coincidencias');
+        }
     }
-
-    // Función que verifica coincidencia exacta de palabras usando una expresión regular
-    function coincidePalabraExacta(campo, termino) {
+    function coincide(campo, termino) {
         if (!campo) return false;
-        const regex = new RegExp(`\\b${termino}\\b`, 'i'); // \b asegura que sea una palabra completa
+        const regex = new RegExp(`${termino}`, 'i'); 
         return regex.test(campo.toString());
     }
+    
 
-    // Función para mostrar una película
+    // lista de pelis
     function mostrarPelicula(pelicula) {
         const li = document.createElement('li');
         li.classList.add('list-group-item');
         li.innerHTML = `
             <h3>${pelicula.title}</h3>
             <p>${pelicula.tagline}</p>
-            <p>${generarEstrellas(pelicula.vote_average)}</p>
+            <p>${Estrellas(pelicula.vote_average)}</p>
         `;
         lista.appendChild(li);
     }
 
-    // Función para generar estrellas basadas en el voto promedio (vote_average)
-    function generarEstrellas(vote_average) {
+    //funcion para mostrar la puntuacion
+    function Estrellas(vote_average) {
         const estrellas = Math.round(vote_average / 2); // 0 a 5 estrellas
         return Array(5).fill().map((_, i) =>
             `<span class="fa fa-star${i < estrellas ? ' checked' : ''}"></span>`
         ).join('');
     }
 
-    // Mostrar mensaje cuando no hay resultados
+    //mensaje para cuando no hay resultados
     function mostrarMensaje(mensaje) {
         const li = document.createElement('li');
         li.classList.add('list-group-item');
@@ -78,10 +78,9 @@ document.addEventListener('DOMContentLoaded', function () {
         lista.appendChild(li);
     }
 
-    // Agregar eventos al botón y al input
+    //evento al boton y al buscador
     btnBuscar.addEventListener('click', buscarPeliculas);
-    inputBuscar.addEventListener('keyup', function (event) {
-        if (event.key === 'Enter') buscarPeliculas();
+    inputBuscar.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') buscarPeliculas(); //se puede usar enter
     });
 });
-
